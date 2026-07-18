@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2f4f3d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>My Diary</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #1c2a22;
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .app-frame {
+    width: 100%;
+    max-width: 420px;
+    height: min(860px, 92vh);
+    background: #fffdf5;
+    border-radius: 28px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .app-header {
+    padding: 16px 16px 10px;
+    background: linear-gradient(180deg, #4a7c59, #2f4f3d);
+    color: #fff;
+    flex-shrink: 0;
+    transition: background 0.4s ease;
+  }
+  .app-header h1 {
+    margin: 0 0 8px;
+    text-align: center;
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 24px;
+  }
+  .app-icons { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .icon-btn {
+    width: auto; padding: 7px 10px; font-size: 11px;
+    background: rgba(255,255,255,0.18); color: #fff;
+    border: none; border-radius: 20px; cursor: pointer; font-weight: 600;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .deco-strip { width: 100%; height: 22px; flex-shrink: 0; overflow: hidden; }
+  .deco-strip svg { width: 100%; height: 100%; display: block; }
+
+  .content {
+    flex: 1; overflow-y: auto; padding: 14px 18px;
+    display: flex; flex-direction: column;
+  }
+
+  input, select { width: 100%; padding: 11px 12px; border: 1px solid #c9b98a; border-radius: 8px; font-size: 15px; margin-bottom: 12px; font-family: inherit; background: rgba(255,255,255,0.9); }
+  button { padding: 10px 14px; background: #4a7c59; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  button:hover { background: #345d40; }
+  button:disabled { opacity: 0.35; cursor: default; }
+  .full-btn { width: 100%; padding: 13px; font-size: 15px; }
+  .error { color: #b23b3b; text-align: center; margin-bottom: 10px; font-size: 14px; min-height: 18px; }
+
+  .page-date-display { font-size: 13px; font-weight: 700; color: #4a7c59; margin-bottom: 8px; }
+  .page-date-sub { font-size: 11px; font-weight: 400; color: #8a7a5c; margin-left: 6px; }
+  .writing-mood { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; min-height: 24px; }
+  .writing-mood .mood-label { font-size: 12px; color: #5c4d33; }
+  .writing-mood .mood-display { font-size: 18px; }
+
+  .page-textarea {
+    width: 100%; flex: 1; min-height: 220px; resize: none;
+    border: 1px solid #c9b98a; border-radius: 8px; padding: 10px 14px;
+    font-size: 16px; line-height: 28px;
+    background-color: #fffdf5;
+    background-image: repeating-linear-gradient(#fffdf5 0px, #fffdf5 27px, #cddbe0 28px);
+    background-position: 0 38px; outline: none;
+  }
+
+  .bottom-nav {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: #f0ead8; border-top: 1px solid #d9c9a3; gap: 6px;
+  }
+  .bottom-nav button { width: auto; padding: 10px 14px; }
+  .page-indicator { font-size: 12px; color: #5c4d33; font-weight: 700; text-align: center; flex: 1; }
+
+  .sheet-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.35); z-index: 15;
+  }
+  .bottom-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: #fffdf5; border-radius: 20px 20px 0 0;
+    max-height: 78%; overflow-y: auto;
+    padding: 18px 20px 24px; box-shadow: 0 -10px 30px rgba(0,0,0,0.25);
+  }
+  .sheet-handle { width: 40px; height: 4px; background: #d9c9a3; border-radius: 3px; margin: 0 auto 12px; }
+  .bottom-sheet h2 { font-size: 16px; color: #3e2f1c; margin: 0 0 4px; text-align: center; }
+  .bottom-sheet label { display: block; font-size: 12px; color: #5c4d33; margin: 14px 0 6px; font-weight: 700; }
+  .close-sheet { position: absolute; top: 14px; right: 16px; width: auto; padding: 4px 10px; background: #b23b3b; font-size: 12px; }
+  .close-sheet:hover { background: #8f2c2c; }
+
+  .sticker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+  .sticker-btn { background: #f0ead8; border: 1px solid #d9c9a3; font-size: 22px; padding: 8px 2px; border-radius: 10px; cursor: pointer; text-align: center; }
+  .sticker-btn.selected { background: #cddbe0; border-color: #4a7c59; }
+  .sticker-name { font-size: 9px; display: block; color: #5c4d33; margin-top: 2px; }
+  .theme-grid, .border-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .theme-swatch { width: 100%; height: 34px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+  .theme-swatch.selected { border-color: #3e2f1c; }
+  .border-swatch { width: 100%; height: 50px; border-radius: 8px; cursor: pointer; border: 2px solid #d9c9a3; overflow: hidden; background: #4a7c59; }
+  .border-swatch.selected { border-color: #3e2f1c; }
+  .border-swatch svg { width: 100%; height: 100%; display:block; }
+  .color-row { display:flex; align-items:center; gap:10px; }
+  .color-row input[type=color] { width: 50px; height: 36px; padding: 2px; margin-bottom:0; cursor:pointer; }
+
+  .center-card { padding: 30px 24px; }
+  .hidden { display: none !important; }
+  .note { text-align: center; color: #8a7a5c; font-size: 11px; padding: 8px 0 0; }
+
+  @media (max-width: 460px) {
+    body { padding: 0; }
+    .app-frame { max-width: 100%; height: 100vh; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-frame" id="appFrame">
+
+  <div class="content center-card" id="setupCard" style="display:none;">
+    <h1 style="font-family:'Brush Script MT','Segoe Script',cursive;text-align:center;color:#3e2f1c;">🌿 My Diary</h1>
+    <p style="text-align:center;color:#5c4d33;font-size:14px;">First time — create a password for your diary</p>
+    <input type="password" id="newPass" placeholder="Create password">
+    <input type="password" id="newPass2" placeholder="Confirm password">
+    <div class="error" id="setupError"></div>
+    <button class="full-btn" onclick="setupPassword()">Create Diary</button>
+  </div>
+
+  <div class="content center-card" id="lockCard" style="display:none;">
+    <h1 style="font-family:'Brush Script MT','Segoe Script',cursive;text-align:center;color:#3e2f1c;">🔒 My Diary</h1>
+    <input type="password" id="passInput" placeholder="Enter password" onkeydown="if(event.key==='Enter') tryUnlock()">
+    <div class="error" id="lockError"></div>
+    <button class="full-btn" onclick="tryUnlock()">Unlock</button>
+  </div>
+
+  <div id="diaryCard" class="hidden" style="display:flex; flex-direction:column; height:100%;">
+    <div class="app-header" id="appHeader">
+      <h1>🌸 My Diary</h1>
+      <div class="app-icons">
+        <button class="icon-btn" onclick="openSheet('stickerSheet')">😊 Mood</button>
+        <button class="icon-btn" onclick="openSheet('settingsSheet')">🎨 Style</button>
+        <button class="icon-btn" onclick="lockDiary()">🔒 Lock</button>
+      </div>
+    </div>
+    <div class="deco-strip" id="decoStrip"></div>
+
+    <div class="content">
+      <div class="page-date-display" id="pageDateDisplay">Saturday, 18 July 2026</div>
+      <div class="writing-mood">
+        <span class="mood-label">Mood:</span>
+        <span class="mood-display" id="currentMoodDisplay">— none —</span>
+      </div>
+      <textarea class="page-textarea" id="pageTextarea" placeholder="Write on this page..."></textarea>
+      <div class="note">Saves automatically when you move to next/prev page.</div>
+    </div>
+
+    <div class="bottom-nav">
+      <button onclick="prevPage()" id="prevBtn">◀</button>
+      <div class="page-indicator" id="pageIndicator">Page 1 of 1</div>
+      <button class="icon-btn" onclick="deletePage()" id="delBtn" style="background:#b23b3b;color:#fff;">🗑</button>
+      <button onclick="nextPage()" id="nextBtn">▶</button>
+    </div>
+  </div>
+
+  <div class="sheet-overlay hidden" id="stickerOverlay" onclick="closeSheet('stickerSheet')"></div>
+  <div class="bottom-sheet hidden" id="stickerSheet">
+    <button class="close-sheet" onclick="closeSheet('stickerSheet')">✕</button>
+    <div class="sheet-handle"></div>
+    <h2>😊 Pick your mood</h2>
+    <div class="sticker-grid" id="stickerGrid"></div>
+  </div>
+
+  <div class="sheet-overlay hidden" id="settingsOverlay" onclick="closeSheet('settingsSheet')"></div>
+  <div class="bottom-sheet hidden" id="settingsSheet">
+    <button class="close-sheet" onclick="closeSheet('settingsSheet')">✕</button>
+    <div class="sheet-handle"></div>
+    <h2>🎨 Style This Page</h2>
+    <label>Writing font style</label>
+    <select id="fontSelect" onchange="changeFont()">
+      <option value="'Segoe Script', 'Comic Sans MS', cursive">Handwriting</option>
+      <option value="'Brush Script MT', 'Segoe Script', cursive">Elegant Cursive</option>
+      <option value="Georgia, serif">Classic Serif</option>
+      <option value="'Courier New', monospace">Typewriter</option>
+      <option value="'Segoe UI', Arial, sans-serif">Simple & Clean</option>
+    </select>
+    <label>Letter color</label>
+    <div class="color-row">
+      <input type="color" id="textColorPicker" value="#2f2a1e" onchange="changeTextColor()">
+      <span style="font-size:13px;color:#5c4d33;">Pick any color</span>
+    </div>
+    <label>Background theme</label>
+    <div class="theme-grid" id="themeGrid"></div>
+    <label>Header/border design</label>
+    <div class="border-grid" id="borderGrid"></div>
+  </div>
+
+</div>
+
+<script>
+let entries = [];
+let currentIndex = 0;
+let selectedMood = null;
+let activeStyle = { font: "'Segoe Script', 'Comic Sans MS', cursive", textColor: "#2f2a1e", theme: 0, border: 0 };
+
+const moodList = [
+  {emoji:'😊', name:'Happy'}, {emoji:'🤩', name:'Excited'}, {emoji:'😍', name:'Loved'},
+  {emoji:'🥳', name:'Celebrating'}, {emoji:'😌', name:'Peaceful'}, {emoji:'😂', name:'Funny'},
+  {emoji:'😢', name:'Sad'}, {emoji:'😡', name:'Angry'}, {emoji:'😰', name:'Anxious'},
+  {emoji:'😴', name:'Tired'}, {emoji:'💪', name:'Motivated'}, {emoji:'🙏', name:'Grateful'}
+];
+const themeList = [
+  {name:'Nature Green', header:'linear-gradient(180deg, #4a7c59, #2f4f3d)'},
+  {name:'Ocean Blue', header:'linear-gradient(180deg, #3f6c95, #274b6b)'},
+  {name:'Sunset Pink', header:'linear-gradient(180deg, #c65b7c, #8f3a5a)'},
+  {name:'Lavender Purple', header:'linear-gradient(180deg, #6a4c93, #4a3372)'},
+  {name:'Warm Beige', header:'linear-gradient(180deg, #a3795c, #7a5a42)'},
+  {name:'Midnight', header:'linear-gradient(180deg, #1c2833, #0f1720)'}
+];
+const borderNames = ['Vine & Flowers', 'Floral Dots', 'Ocean Waves', 'Stars & Moons'];
+
+function borderSVGHorizontal(type) {
+  if (type === 0) {
+    return `<svg viewBox="0 0 400 22" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="100" height="22" patternUnits="userSpaceOnUse"><path d="M0 11 C25 -5,50 27,75 11 C87 3,95 15,100 11" stroke="#8fbf9f" stroke-width="3" fill="none" opacity="0.9"/><circle cx="20" cy="8" r="4" fill="#f7d6e0"/><circle cx="70" cy="14" r="4" fill="#fff3b0"/></pattern></defs><rect width="400" height="22" fill="url(#p)"/></svg>`;
+  } else if (type === 1) {
+    return `<svg viewBox="0 0 400 22" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="80" height="22" patternUnits="userSpaceOnUse"><g transform="translate(40,11)"><circle cx="0" cy="-6" r="4" fill="#fbd3e0"/><circle cx="5" cy="-2" r="4" fill="#fbd3e0"/><circle cx="5" cy="4" r="4" fill="#fbd3e0"/><circle cx="-5" cy="4" r="4" fill="#fbd3e0"/><circle cx="-5" cy="-2" r="4" fill="#fbd3e0"/><circle cx="0" cy="0" r="3" fill="#f2a65a"/></g></pattern></defs><rect width="400" height="22" fill="url(#p)"/></svg>`;
+  } else if (type === 2) {
+    return `<svg viewBox="0 0 400 22" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="60" height="22" patternUnits="userSpaceOnUse"><path d="M0 11 Q15 2 30 11 T60 11" stroke="#bde0e8" stroke-width="3" fill="none" opacity="0.9"/><circle cx="15" cy="15" r="2.5" fill="#ffffffcc"/></pattern></defs><rect width="400" height="22" fill="url(#p)"/></svg>`;
+  } else {
+    return `<svg viewBox="0 0 400 22" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="70" height="22" patternUnits="userSpaceOnUse"><path d="M15 11 l2 5 5 1 -4 4 1 5 -4 -3 -4 3 1 -5 -4 -4 5 -1 z" fill="#fff3b0"/><path d="M45 6 a5 5 0 1 0 5 5 a4 4 0 1 1 -5 -5 z" fill="#e8e8f5"/></pattern></defs><rect width="400" height="22" fill="url(#p)"/></svg>`;
+  }
+}
+
+const weekdayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function formatNiceDate(d) {
+  const weekday = weekdayNames[d.getDay()];
+  const day = d.getDate();
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+  let hours = d.getHours();
+  const mins = d.getMinutes().toString().padStart(2,'0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12; if (hours === 0) hours = 12;
+  return `${weekday}, ${day} ${month} ${year}<span class="page-date-sub">${hours}:${mins} ${ampm}</span>`;
+}
+
+function init() {
+  const storedPass = localStorage.getItem('diary_password');
+  if (storedPass) { document.getElementById('lockCard').style.display = 'flex'; }
+  else { document.getElementById('setupCard').style.display = 'flex'; }
+  buildStickerGrid();
+  buildThemeGrid();
+  buildBorderGrid();
+}
+
+function buildStickerGrid() {
+  const grid = document.getElementById('stickerGrid');
+  grid.innerHTML = moodList.map(m =>
+    `<button type="button" class="sticker-btn" onclick="pickMood('${m.emoji}', '${m.name}', this)">${m.emoji}<span class="sticker-name">${m.name}</span></button>`
+  ).join('');
+}
+function pickMood(emoji, name, el) {
+  document.querySelectorAll('#stickerGrid .sticker-btn').forEach(b => b.classList.remove('selected'));
+  if (selectedMood === emoji) { selectedMood = null; document.getElementById('currentMoodDisplay').textContent = '— none —'; }
+  else { selectedMood = emoji; el.classList.add('selected'); document.getElementById('currentMoodDisplay').textContent = emoji + ' ' + name; }
+  saveCurrentPage(currentIndex);
+}
+
+function openSheet(id) {
+  const overlayId = id.replace('Sheet','Overlay');
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById(overlayId).classList.remove('hidden');
+}
+function closeSheet(id) {
+  const overlayId = id.replace('Sheet','Overlay');
+  document.getElementById(id).classList.add('hidden');
+  document.getElementById(overlayId).classList.add('hidden');
+}
+
+function buildThemeGrid() {
+  const grid = document.getElementById('themeGrid');
+  grid.innerHTML = themeList.map((t, i) => `<div class="theme-swatch" style="background:${t.header}" title="${t.name}" onclick="pickTheme(${i}, this)"></div>`).join('');
+}
+function pickTheme(i, el) {
+  activeStyle.theme = i;
+  applyStyleVisual();
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  saveCurrentPage(currentIndex);
+}
+function buildBorderGrid() {
+  const grid = document.getElementById('borderGrid');
+  grid.innerHTML = borderNames.map((name, i) => `<div class="border-swatch" title="${name}" onclick="pickBorder(${i}, this)">${borderSVGHorizontal(i)}</div>`).join('');
+}
+function pickBorder(i, el) {
+  activeStyle.border = i;
+  applyStyleVisual();
+  document.querySelectorAll('.border-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  saveCurrentPage(currentIndex);
+}
+function changeFont() {
+  activeStyle.font = document.getElementById('fontSelect').value;
+  applyStyleVisual();
+  saveCurrentPage(currentIndex);
+}
+function changeTextColor() {
+  activeStyle.textColor = document.getElementById('textColorPicker').value;
+  applyStyleVisual();
+  saveCurrentPage(currentIndex);
+}
+
+function applyStyleVisual() {
+  const ta = document.getElementById('pageTextarea');
+  ta.style.fontFamily = activeStyle.font;
+  ta.style.color = activeStyle.textColor;
+  document.getElementById('fontSelect').value = activeStyle.font;
+  document.getElementById('textColorPicker').value = activeStyle.textColor;
+
+  const t = themeList[activeStyle.theme] || themeList[0];
+  document.getElementById('appHeader').style.background = t.header;
+  document.getElementById('decoStrip').innerHTML = borderSVGHorizontal(activeStyle.border);
+  document.body.style.background = t.header.replace('180deg','135deg');
+
+  document.querySelectorAll('.theme-swatch').forEach((s, i) => s.classList.toggle('selected', i === activeStyle.theme));
+  document.querySelectorAll('.border-swatch').forEach((s, i) => s.classList.toggle('selected', i === activeStyle.border));
+}
+
+function setupPassword() {
+  const p1 = document.getElementById('newPass').value;
+  const p2 = document.getElementById('newPass2').value;
+  const errEl = document.getElementById('setupError');
+  if (!p1 || p1.length < 3) { errEl.textContent = 'Password must be at least 3 characters'; return; }
+  if (p1 !== p2) { errEl.textContent = 'Passwords do not match'; return; }
+  localStorage.setItem('diary_password', p1);
+  document.getElementById('setupCard').style.display = 'none';
+  unlockDiary();
+}
+function tryUnlock() {
+  const input = document.getElementById('passInput').value;
+  const errEl = document.getElementById('lockError');
+  const stored = localStorage.getItem('diary_password');
+  if (stored === input) {
+    document.getElementById('lockCard').style.display = 'none';
+    document.getElementById('passInput').value = '';
+    errEl.textContent = '';
+    unlockDiary();
+  } else { errEl.textContent = 'Wrong password, try again'; }
+}
+function lockDiary() {
+  saveCurrentPage(currentIndex);
+  document.getElementById('diaryCard').classList.add('hidden');
+  closeSheet('stickerSheet');
+  closeSheet('settingsSheet');
+  document.getElementById('lockCard').style.display = 'flex';
+}
+function unlockDiary() {
+  document.getElementById('diaryCard').classList.remove('hidden');
+  const stored = localStorage.getItem('diary_entries');
+  entries = stored ? JSON.parse(stored) : [];
+  currentIndex = entries.length;
+  loadPage(currentIndex);
+}
+function saveEntriesToStorage() { localStorage.setItem('diary_entries', JSON.stringify(entries)); }
+
+function saveCurrentPage(index) {
+  const ta = document.getElementById('pageTextarea');
+  const text = ta.value;
+  const trimmed = text.trim();
+  if (index < entries.length) {
+    entries[index].text = text;
+    entries[index].mood = selectedMood;
+    entries[index].style = {...activeStyle};
+    saveEntriesToStorage();
+  } else if (trimmed) {
+    const now = Date.now();
+    entries.push({ id: now, date: now, text: text, mood: selectedMood, style: {...activeStyle} });
+    saveEntriesToStorage();
+  }
+}
+
+function loadPage(index) {
+  currentIndex = index;
+  const ta = document.getElementById('pageTextarea');
+  if (index < entries.length) {
+    const e = entries[index];
+    ta.value = e.text;
+    selectedMood = e.mood || null;
+    activeStyle = e.style ? {...e.style} : {...activeStyle};
+    const d = new Date(typeof e.date === 'number' ? e.date : Date.parse(e.date) || Date.now());
+    document.getElementById('pageDateDisplay').innerHTML = formatNiceDate(d);
+  } else {
+    ta.value = '';
+    selectedMood = null;
+    document.getElementById('pageDateDisplay').innerHTML = formatNiceDate(new Date());
+  }
+  document.getElementById('currentMoodDisplay').textContent = selectedMood ? (selectedMood + ' selected') : '— none —';
+  document.querySelectorAll('#stickerGrid .sticker-btn').forEach(b => b.classList.remove('selected'));
+  applyStyleVisual();
+  updateNav();
+}
+
+function updateNav() {
+  const total = entries.length + 1;
+  document.getElementById('pageIndicator').textContent = `Page ${currentIndex + 1} of ${total}` + (currentIndex === entries.length ? ' (new)' : '');
+  document.getElementById('prevBtn').disabled = currentIndex === 0;
+  document.getElementById('delBtn').disabled = currentIndex >= entries.length;
+}
+
+function nextPage() {
+  saveCurrentPage(currentIndex);
+  const target = Math.min(currentIndex + 1, entries.length);
+  loadPage(target);
+}
+function prevPage() {
+  saveCurrentPage(currentIndex);
+  const target = Math.max(0, currentIndex - 1);
+  loadPage(target);
+}
+function deletePage() {
+  if (currentIndex >= entries.length) return;
+  entries.splice(currentIndex, 1);
+  saveEntriesToStorage();
+  const target = Math.min(currentIndex, entries.length);
+  loadPage(target);
+}
+
+init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
