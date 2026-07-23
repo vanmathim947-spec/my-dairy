@@ -27,8 +27,8 @@
     max-width: 420px;
     height: min(860px, 92vh);
     background: #fffdf5;
-    border-radius: 28px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    border-radius: 34px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 0 0 8px rgba(255,255,255,0.04);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -36,25 +36,29 @@
   }
 
   .app-header {
-    padding: 16px 16px 10px;
-    background: linear-gradient(180deg, #4a7c59, #2f4f3d);
+    padding: 18px 16px 12px;
+    background: linear-gradient(160deg, #4a7c59, #2f4f3d 70%);
     color: #fff;
     flex-shrink: 0;
     transition: background 0.4s ease;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
   }
   .app-header h1 {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     text-align: center;
     font-family: 'Brush Script MT', 'Segoe Script', cursive;
-    font-size: 24px;
+    font-size: 26px;
+    letter-spacing: 0.5px;
   }
   .app-icons { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
   .icon-btn {
-    width: auto; padding: 7px 10px; font-size: 11px;
-    background: rgba(255,255,255,0.18); color: #fff;
-    border: none; border-radius: 20px; cursor: pointer; font-weight: 600;
+    width: auto; padding: 8px 12px; font-size: 11px;
+    background: rgba(255,255,255,0.16); color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; cursor: pointer; font-weight: 600;
+    backdrop-filter: blur(2px);
   }
-  .icon-btn:hover { background: rgba(255,255,255,0.3); }
+  .icon-btn:hover { background: rgba(255,255,255,0.32); }
 
   .deco-strip { width: 100%; height: 22px; flex-shrink: 0; overflow: hidden; }
   .deco-strip svg { width: 100%; height: 100%; display: block; }
@@ -77,13 +81,43 @@
   .writing-mood .mood-label { font-size: 12px; color: #5c4d33; }
   .writing-mood .mood-display { font-size: 18px; }
 
-  .page-textarea {
-    width: 100%; flex: 1; min-height: 220px; resize: none;
-    border: 1px solid #c9b98a; border-radius: 8px; padding: 10px 14px;
-    font-size: 16px; line-height: 28px;
+  .page-editor-wrap { position: relative; flex: 1; display: flex; min-height: 220px; }
+  .page-editor {
+    width: 100%; flex: 1; overflow-y: auto;
+    border: 1px solid #c9b98a; border-radius: 10px; padding: 22px 20px 16px;
+    font-size: 16px; line-height: 28px; color: #2f2a1e;
     background-color: #fffdf5;
     background-image: repeating-linear-gradient(#fffdf5 0px, #fffdf5 27px, #cddbe0 28px);
-    background-position: 0 38px; outline: none;
+    background-position: 0 44px; outline: none;
+    position: relative;
+  }
+  .page-corner {
+    position: absolute; width: 26px; height: 26px; pointer-events: none; opacity: 0.55; z-index: 1;
+  }
+  .corner-tl { top: 4px; left: 4px; }
+  .corner-tr { top: 4px; right: 4px; transform: scaleX(-1); }
+  .corner-bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
+  .corner-br { bottom: 4px; right: 4px; transform: scale(-1,-1); }
+  .page-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #a89a7a;
+  }
+
+  .highlight-bar {
+    display: flex; align-items: center; gap: 6px; margin: 8px 0; flex-wrap: wrap;
+  }
+  .highlight-label { font-size: 11px; color: #8a7a5c; margin-right: 2px; }
+  .highlight-swatch {
+    width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+    border: 2px solid rgba(0,0,0,0.15); padding: 0;
+  }
+  .highlight-swatch.clear-swatch {
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #b23b3b; font-weight: 700;
+  }
+  .custom-color-input {
+    width: 26px; height: 26px; padding: 0; border: 2px solid rgba(0,0,0,0.15);
+    border-radius: 50%; cursor: pointer; margin-bottom: 0; overflow: hidden;
   }
 
   .bottom-nav {
@@ -168,7 +202,24 @@
         <span class="mood-label">Mood:</span>
         <span class="mood-display" id="currentMoodDisplay">— none —</span>
       </div>
-      <textarea class="page-textarea" id="pageTextarea" placeholder="Write on this page..."></textarea>
+      <div class="page-editor-wrap">
+        <svg class="page-corner corner-tl" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M2 2 C15 2 15 15 2 15 M2 2 C2 15 15 15 15 2" stroke="#8fbf9f" stroke-width="2.5" fill="none"/><circle cx="6" cy="6" r="2.5" fill="#f7d6e0"/></svg>
+        <svg class="page-corner corner-tr" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M2 2 C15 2 15 15 2 15 M2 2 C2 15 15 15 15 2" stroke="#8fbf9f" stroke-width="2.5" fill="none"/><circle cx="6" cy="6" r="2.5" fill="#f7d6e0"/></svg>
+        <svg class="page-corner corner-bl" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M2 2 C15 2 15 15 2 15 M2 2 C2 15 15 15 15 2" stroke="#8fbf9f" stroke-width="2.5" fill="none"/><circle cx="6" cy="6" r="2.5" fill="#f7d6e0"/></svg>
+        <svg class="page-corner corner-br" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M2 2 C15 2 15 15 2 15 M2 2 C2 15 15 15 15 2" stroke="#8fbf9f" stroke-width="2.5" fill="none"/><circle cx="6" cy="6" r="2.5" fill="#f7d6e0"/></svg>
+        <div class="page-editor" id="pageEditor" contenteditable="true" data-placeholder="Write on this page..."></div>
+      </div>
+      <div class="highlight-bar">
+        <span class="highlight-label">Highlight word:</span>
+        <button type="button" class="highlight-swatch" style="background:#e63946" onclick="applyHighlight('#e63946')"></button>
+        <button type="button" class="highlight-swatch" style="background:#f4a261" onclick="applyHighlight('#f4a261')"></button>
+        <button type="button" class="highlight-swatch" style="background:#2a9d8f" onclick="applyHighlight('#2a9d8f')"></button>
+        <button type="button" class="highlight-swatch" style="background:#264653" onclick="applyHighlight('#264653')"></button>
+        <button type="button" class="highlight-swatch" style="background:#8e44ad" onclick="applyHighlight('#8e44ad')"></button>
+        <button type="button" class="highlight-swatch" style="background:#e91e8c" onclick="applyHighlight('#e91e8c')"></button>
+        <button type="button" class="highlight-swatch clear-swatch" onclick="applyHighlight('#2f2a1e')">✕</button>
+        <input type="color" id="customHighlightColor" class="custom-color-input" value="#ff6f00" onchange="applyHighlight(this.value)" title="Pick any color">
+      </div>
       <div class="note">Saves automatically when you move to next/prev page.</div>
     </div>
 
@@ -201,15 +252,23 @@
       <option value="'Courier New', monospace">Typewriter</option>
       <option value="'Segoe UI', Arial, sans-serif">Simple & Clean</option>
     </select>
-    <label>Letter color</label>
-    <div class="color-row">
-      <input type="color" id="textColorPicker" value="#2f2a1e" onchange="changeTextColor()">
-      <span style="font-size:13px;color:#5c4d33;">Pick any color</span>
-    </div>
+    <label>Highlight important words</label>
+    <p style="font-size:12px;color:#5c4d33;margin:0 0 10px;">Select a word while writing, then tap a color in the highlight bar below the page. Colors you've already applied stay locked — picking a new color later won't change them.</p>
     <label>Background theme</label>
     <div class="theme-grid" id="themeGrid"></div>
     <label>Header/border design</label>
     <div class="border-grid" id="borderGrid"></div>
+
+    <label>🔑 Change password</label>
+    <div id="changePassError" class="error" style="min-height:16px;font-size:12px;"></div>
+    <input type="password" id="oldPassInput" placeholder="Current password">
+    <input type="password" id="newPassInput" placeholder="New password">
+    <input type="password" id="newPassInput2" placeholder="Confirm new password">
+    <button class="full-btn" onclick="changePassword()">Update Password</button>
+
+    <label style="color:#b23b3b;">⚠ Forgot password?</label>
+    <p style="font-size:12px;color:#5c4d33;margin:0 0 10px;">This app stores everything only on this device — there's no server to verify who you are, so a true "forgot password" recovery isn't possible. If you're locked out, you can reset the diary below, but <strong>this permanently deletes all your entries</strong>.</p>
+    <button class="full-btn" style="background:#b23b3b;" onclick="resetDiary()">Reset Diary (delete everything)</button>
   </div>
 
 </div>
@@ -218,7 +277,7 @@
 let entries = [];
 let currentIndex = 0;
 let selectedMood = null;
-let activeStyle = { font: "'Segoe Script', 'Comic Sans MS', cursive", textColor: "#2f2a1e", theme: 0, border: 0 };
+let activeStyle = { font: "'Segoe Script', 'Comic Sans MS', cursive", theme: 0, border: 0 };
 
 const moodList = [
   {emoji:'😊', name:'Happy'}, {emoji:'🤩', name:'Excited'}, {emoji:'😍', name:'Loved'},
@@ -323,18 +382,19 @@ function changeFont() {
   applyStyleVisual();
   saveCurrentPage(currentIndex);
 }
-function changeTextColor() {
-  activeStyle.textColor = document.getElementById('textColorPicker').value;
-  applyStyleVisual();
+
+function applyHighlight(color) {
+  const editor = document.getElementById('pageEditor');
+  editor.focus();
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand('foreColor', false, color);
   saveCurrentPage(currentIndex);
 }
 
 function applyStyleVisual() {
-  const ta = document.getElementById('pageTextarea');
-  ta.style.fontFamily = activeStyle.font;
-  ta.style.color = activeStyle.textColor;
+  const editor = document.getElementById('pageEditor');
+  editor.style.fontFamily = activeStyle.font;
   document.getElementById('fontSelect').value = activeStyle.font;
-  document.getElementById('textColorPicker').value = activeStyle.textColor;
 
   const t = themeList[activeStyle.theme] || themeList[0];
   document.getElementById('appHeader').style.background = t.header;
@@ -343,6 +403,33 @@ function applyStyleVisual() {
 
   document.querySelectorAll('.theme-swatch').forEach((s, i) => s.classList.toggle('selected', i === activeStyle.theme));
   document.querySelectorAll('.border-swatch').forEach((s, i) => s.classList.toggle('selected', i === activeStyle.border));
+}
+
+function changePassword() {
+  const oldPass = document.getElementById('oldPassInput').value;
+  const newPass = document.getElementById('newPassInput').value;
+  const newPass2 = document.getElementById('newPassInput2').value;
+  const errEl = document.getElementById('changePassError');
+  const stored = localStorage.getItem('diary_password');
+
+  if (oldPass !== stored) { errEl.textContent = 'Current password is incorrect'; return; }
+  if (!newPass || newPass.length < 3) { errEl.textContent = 'New password must be at least 3 characters'; return; }
+  if (newPass !== newPass2) { errEl.textContent = 'New passwords do not match'; return; }
+
+  localStorage.setItem('diary_password', newPass);
+  errEl.style.color = '#2f7d3c';
+  errEl.textContent = 'Password updated!';
+  document.getElementById('oldPassInput').value = '';
+  document.getElementById('newPassInput').value = '';
+  document.getElementById('newPassInput2').value = '';
+  setTimeout(() => { errEl.textContent = ''; errEl.style.color = ''; }, 2500);
+}
+
+function resetDiary() {
+  if (!confirm('This will permanently delete your password and ALL diary entries on this device. This cannot be undone. Continue?')) return;
+  localStorage.removeItem('diary_password');
+  localStorage.removeItem('diary_entries');
+  location.reload();
 }
 
 function setupPassword() {
@@ -383,9 +470,9 @@ function unlockDiary() {
 function saveEntriesToStorage() { localStorage.setItem('diary_entries', JSON.stringify(entries)); }
 
 function saveCurrentPage(index) {
-  const ta = document.getElementById('pageTextarea');
-  const text = ta.value;
-  const trimmed = text.trim();
+  const editor = document.getElementById('pageEditor');
+  const text = editor.innerHTML;
+  const trimmed = editor.textContent.trim();
   if (index < entries.length) {
     entries[index].text = text;
     entries[index].mood = selectedMood;
@@ -400,16 +487,16 @@ function saveCurrentPage(index) {
 
 function loadPage(index) {
   currentIndex = index;
-  const ta = document.getElementById('pageTextarea');
+  const editor = document.getElementById('pageEditor');
   if (index < entries.length) {
     const e = entries[index];
-    ta.value = e.text;
+    editor.innerHTML = e.text;
     selectedMood = e.mood || null;
     activeStyle = e.style ? {...e.style} : {...activeStyle};
     const d = new Date(typeof e.date === 'number' ? e.date : Date.parse(e.date) || Date.now());
     document.getElementById('pageDateDisplay').innerHTML = formatNiceDate(d);
   } else {
-    ta.value = '';
+    editor.innerHTML = '';
     selectedMood = null;
     document.getElementById('pageDateDisplay').innerHTML = formatNiceDate(new Date());
   }
